@@ -1,0 +1,4 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.a6v.pagingadapter">
+    <application />
+</manifest>

@@ -1,0 +1,51 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.1.2'
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+subprojects {
+    repositories {
+        jcenter()
+    }
+
+    afterEvaluate {
+        android {
+            compileSdkVersion 23
+            buildToolsVersion '23.0.2'
+
+            defaultConfig {
+                minSdkVersion 15
+                targetSdkVersion 23
+            }
+            buildTypes {
+                release {
+                    minifyEnabled false
+                }
+            }
+        }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+def supportVersion = '23.3.0'
+def rxBindingVersion = '0.4.0'
+ext {
+    appcompat = "com.android.support:appcompat-v7:$supportVersion"
+    recyclerview = "com.android.support:recyclerview-v7:$supportVersion"
+    rxjava = 'io.reactivex:rxjava:1.1.5'
+    rxandroid = 'io.reactivex:rxandroid:1.2.0'
+    rxbinding = "com.jakewharton.rxbinding:rxbinding:$rxBindingVersion"
+    rxbindingSupportV4 = "com.jakewharton.rxbinding:rxbinding-support-v4:$rxBindingVersion"
+}
