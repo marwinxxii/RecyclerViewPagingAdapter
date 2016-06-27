@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.*;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 
@@ -22,17 +23,33 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
   private final int messageViewType;
 
   private final Handler mainThreadHandler = new Handler(Looper.getMainLooper());
-  private final Runnable notifyLoadListenerRunnable = new Runnable() {
+  private final Runnable notifyProgressShownRunnable = new Runnable() {
     @Override
     public void run() {
-      if (onLoadListener != null) {
-        onLoadListener.onLoadPage();
+      if (progressShownListener != null) {
+        progressShownListener.onProgressShown();
+      }
+    }
+  };
+  private final Runnable notifyMessageClickRunnable = new Runnable() {
+    @Override
+    public void run() {
+      if (messageClickListener != null) {
+        messageClickListener.onMessageClick();
+      }
+    }
+  };
+  private final OnClickListener realMessageClickListener = new OnClickListener() {
+    @Override
+    public void onClick(View v) {
+      if (progressShownListener != null) {
+        mainThreadHandler.post(notifyMessageClickRunnable);
       }
     }
   };
 
-  @Nullable private OnLoadListener onLoadListener;
-  @Nullable private OnClickListener messageClickListener;
+  @Nullable private ProgressShownListener progressShownListener;
+  @Nullable private MessageClickListener messageClickListener;
 
   private State state = State.IDLE;
   private LayoutInflater inflater;
@@ -45,7 +62,7 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
     adapter.registerAdapterDataObserver(new AdapterDataObserverWrapper<>(this));
     progressLayoutRes = builder.progressLayoutRes;
     progressViewType = builder.progressViewType;
-    onLoadListener = builder.onLoadListener;
+    progressShownListener = builder.progressShownListener;
     message = builder.message;
     messageLayoutRes = builder.messageLayoutRes;
     messageViewType = builder.messageViewType;
@@ -101,32 +118,34 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
       itemPosition = position;
       if (state == State.READY_TO_LOAD) {
         state = State.LOADING;
-        mainThreadHandler.post(notifyLoadListenerRunnable);
+        mainThreadHandler.post(notifyProgressShownRunnable);
       }
     } else if (holder instanceof MessageViewHolder) {
       itemPosition = position;
       MessageViewHolder messageViewHolder = (MessageViewHolder) holder;
-      messageViewHolder.bind(message, messageClickListener);
+      messageViewHolder.bind(message, realMessageClickListener);
     } else {
       adapter.onBindViewHolder((T) holder, position);
     }
   }
 
-  public void setOnLoadListener(@NonNull OnLoadListener onLoadListener) {
+  public void setProgressShownListener(@NonNull ProgressShownListener progressShownListener) {
     //TODO check not null
-    this.onLoadListener = onLoadListener;
+    this.progressShownListener = progressShownListener;
   }
 
-  public void removeOnLoadListener() {
-    onLoadListener = null;
+  public void removeProgressShownListener() {
+    mainThreadHandler.removeCallbacks(notifyProgressShownRunnable);
+    progressShownListener = null;
   }
 
-  public void setMessageClickListener(@NonNull OnClickListener messageClickListener) {
+  public void setMessageClickListener(@NonNull MessageClickListener messageClickListener) {
     //TODO check not null
     this.messageClickListener = messageClickListener;
   }
 
   public void removeMessageClickListener() {
+    mainThreadHandler.removeCallbacks(notifyMessageClickRunnable);
     messageClickListener = null;
   }
 
@@ -167,11 +186,11 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
     private final Adapter<T> adapter;
     private int progressLayoutRes = R.layout.rvpa_widget_list_progress;
     private int progressViewType = PROGRESS_VIEW_TYPE;
-    private @Nullable OnLoadListener onLoadListener;
+    private @Nullable ProgressShownListener progressShownListener;
     private CharSequence message;
     private int messageLayoutRes = R.layout.rvpa_widget_list_message;
     private int messageViewType = MESSAGE_VIEW_TYPE;
-    private @Nullable OnClickListener messageClickListener;
+    private @Nullable MessageClickListener messageClickListener;
 
     public Builder(@NonNull Adapter<T> adapter) {
       this.adapter = adapter;
@@ -187,8 +206,8 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
       return this;
     }
 
-    public Builder setOnLoadListener(@NonNull OnLoadListener onLoadListener) {
-      this.onLoadListener = onLoadListener;
+    public Builder setProgressShownListener(@NonNull ProgressShownListener progressShownListener) {
+      this.progressShownListener = progressShownListener;
       return this;
     }
 
@@ -207,7 +226,7 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
       return this;
     }
 
-    public Builder setMessageClickListener(@NonNull OnClickListener messageClickListener) {
+    public Builder setMessageClickListener(@NonNull MessageClickListener messageClickListener) {
       this.messageClickListener = messageClickListener;
       return this;
     }
@@ -217,8 +236,12 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
     }
   }
 
-  public interface OnLoadListener {
-    void onLoadPage();
+  public interface ProgressShownListener {
+    void onProgressShown();
+  }
+
+  public interface MessageClickListener {
+    void onMessageClick();
   }
 
   private enum State {

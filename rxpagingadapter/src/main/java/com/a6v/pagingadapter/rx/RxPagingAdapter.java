@@ -6,6 +6,7 @@ import com.a6v.pagingadapter.PagingAdapter;
 
 import rx.Observable;
 import rx.Subscriber;
+import rx.android.MainThreadSubscription;
 import rx.functions.Action0;
 import rx.subscriptions.Subscriptions;
 
@@ -18,20 +19,20 @@ public final class RxPagingAdapter {
     return Observable.create(new Observable.OnSubscribe<Void>() {
       @Override
       public void call(final Subscriber<? super Void> subscriber) {
-        adapter.setOnLoadListener(new PagingAdapter.OnLoadListener() {
+        adapter.setProgressShownListener(new PagingAdapter.ProgressShownListener() {
           @Override
-          public void onLoadPage() {
+          public void onProgressShown() {
             if (!subscriber.isUnsubscribed()) {
               subscriber.onNext(null);
             }
           }
         });
-        subscriber.add(Subscriptions.create(new Action0() {
+        subscriber.add(new MainThreadSubscription() {
           @Override
-          public void call() {
-            adapter.removeOnLoadListener();
+          protected void onUnsubscribe() {
+            adapter.removeProgressShownListener();
           }
-        }));
+        });
       }
     });
   }
@@ -40,20 +41,20 @@ public final class RxPagingAdapter {
     return Observable.create(new Observable.OnSubscribe<Void>() {
       @Override
       public void call(final Subscriber<? super Void> subscriber) {
-        adapter.setMessageClickListener(new View.OnClickListener() {
+        adapter.setMessageClickListener(new PagingAdapter.MessageClickListener() {
           @Override
-          public void onClick(View v) {
+          public void onMessageClick() {
             if (!subscriber.isUnsubscribed()) {
               subscriber.onNext(null);
             }
           }
         });
-        subscriber.add(Subscriptions.create(new Action0() {
+        subscriber.add(new MainThreadSubscription() {
           @Override
-          public void call() {
+          protected void onUnsubscribe() {
             adapter.removeMessageClickListener();
           }
-        }));
+        });
       }
     });
   }

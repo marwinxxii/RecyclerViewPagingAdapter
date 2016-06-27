@@ -9,6 +9,7 @@ import android.util.Log;
 
 import com.a6v.pagingadapter.PagingAdapter;
 import com.a6v.pagingadapter.rx.RxPager;
+import com.a6v.pagingadapter.rx.RxPagingAdapter;
 import com.jakewharton.rxbinding.support.v4.widget.RxSwipeRefreshLayout;
 
 import java.util.ArrayList;
@@ -35,13 +36,13 @@ public class MainActivity extends AppCompatActivity {
     final PagingAdapter<StringItemsAdapter.StringViewHolder> pagingAdapter = new PagingAdapter.Builder<>(itemsAdapter).build();
     view.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
     view.setAdapter(pagingAdapter);
-    Observable<Integer> refreshes = RxSwipeRefreshLayout.refreshes(swipe).map(new Func1<Void, Integer>() {
+    Observable<Integer> swipeToRefresh = RxSwipeRefreshLayout.refreshes(swipe).map(new Func1<Void, Integer>() {
       @Override
       public Integer call(Void aVoid) {
         return 0;
       }
     });
-    Observable<Integer> reloads = savedInstanceState == null ? refreshes.startWith(0) : refreshes;
+    Observable<Integer> reloads = savedInstanceState == null ? swipeToRefresh.startWith(0) : swipeToRefresh;
     RxPager.observePages(pagingAdapter, 100, reloads)
       .doOnNext(new Action1<Integer>() {
         @Override
@@ -70,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
               @Override
               public void call(Throwable throwable) {
                 logError(throwable);
-                pagingAdapter.showMessage("Error");
+                pagingAdapter.showMessage("Error. Tap to reload");
                 setIsRefreshingCompat(swipe, false);
               }
             })
