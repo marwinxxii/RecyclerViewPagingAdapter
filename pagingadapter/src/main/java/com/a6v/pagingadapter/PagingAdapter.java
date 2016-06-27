@@ -43,6 +43,9 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
     @Override
     public void onClick(View v) {
       if (progressShownListener != null) {
+        if (showProgressOnMessageClick) {
+          showProgress();
+        }
         mainThreadHandler.post(notifyMessageClickRunnable);
       }
     }
@@ -55,6 +58,7 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
   private LayoutInflater inflater;
   private int itemPosition = -1;
   private int itemCount = 0;
+  private boolean showProgressOnMessageClick = true;
   @Nullable private CharSequence message;
 
   public PagingAdapter(Builder<T> builder) {
@@ -67,6 +71,7 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
     messageLayoutRes = builder.messageLayoutRes;
     messageViewType = builder.messageViewType;
     messageClickListener = builder.messageClickListener;
+    showProgressOnMessageClick = builder.showProgressOnMessageClick;
   }
 
   @Override
@@ -191,48 +196,54 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
     private int messageLayoutRes = R.layout.rvpa_widget_list_message;
     private int messageViewType = MESSAGE_VIEW_TYPE;
     private @Nullable MessageClickListener messageClickListener;
+    private boolean showProgressOnMessageClick = true;
 
     public Builder(@NonNull Adapter<T> adapter) {
       this.adapter = adapter;
     }
 
-    public Builder setProgressLayoutRes(@LayoutRes int progressLayoutRes) {
+    public Builder<T> setProgressLayoutRes(@LayoutRes int progressLayoutRes) {
       this.progressLayoutRes = progressLayoutRes;
       return this;
     }
 
-    public Builder setProgressViewType(int progressViewType) {
+    public Builder<T> setProgressViewType(int progressViewType) {
       this.progressViewType = progressViewType;
       return this;
     }
 
-    public Builder setProgressShownListener(@NonNull ProgressShownListener progressShownListener) {
+    public Builder<T> setProgressShownListener(@NonNull ProgressShownListener progressShownListener) {
       this.progressShownListener = progressShownListener;
       return this;
     }
 
-    public Builder setMessage(CharSequence message) {
+    public Builder<T> setMessage(CharSequence message) {
       this.message = message;
       return this;
     }
 
-    public Builder setMessageLayoutRes(@LayoutRes int messageLayoutRes) {
+    public Builder<T> setMessageLayoutRes(@LayoutRes int messageLayoutRes) {
       this.messageLayoutRes = messageLayoutRes;
       return this;
     }
 
-    public Builder setMessageViewType(int messageViewType) {
+    public Builder<T> setMessageViewType(int messageViewType) {
       this.messageViewType = messageViewType;
       return this;
     }
 
-    public Builder setMessageClickListener(@NonNull MessageClickListener messageClickListener) {
+    public Builder<T> setMessageClickListener(@NonNull MessageClickListener messageClickListener) {
       this.messageClickListener = messageClickListener;
       return this;
     }
 
     public PagingAdapter<T> build() {
       return new PagingAdapter<>(this);
+    }
+
+    public Builder<T> showProgressOnMessageClick(boolean showProgressOnMessageClick) {
+      this.showProgressOnMessageClick = showProgressOnMessageClick;
+      return this;
     }
   }
 

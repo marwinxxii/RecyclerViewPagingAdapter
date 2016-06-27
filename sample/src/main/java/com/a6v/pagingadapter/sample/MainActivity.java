@@ -9,7 +9,7 @@ import android.util.Log;
 
 import com.a6v.pagingadapter.PagingAdapter;
 import com.a6v.pagingadapter.rx.RxPager;
-import com.a6v.pagingadapter.rx.RxPagingAdapter;
+import com.a6v.pagingadapter.rx.RxPager.PageEvent;
 import com.jakewharton.rxbinding.support.v4.widget.RxSwipeRefreshLayout;
 
 import java.util.ArrayList;
@@ -33,7 +33,9 @@ public class MainActivity extends AppCompatActivity {
     final WebApi webApi = new WebApi();
     final ArrayList<String> items = new ArrayList<>();
     final StringItemsAdapter itemsAdapter = new StringItemsAdapter(items);
-    final PagingAdapter<StringItemsAdapter.StringViewHolder> pagingAdapter = new PagingAdapter.Builder<>(itemsAdapter).build();
+    final PagingAdapter<StringItemsAdapter.StringViewHolder> pagingAdapter = new PagingAdapter.Builder<>(itemsAdapter)
+      .showProgressOnMessageClick(false)//we have custom progress logic because of swipe
+      .build();
     view.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
     view.setAdapter(pagingAdapter);
     Observable<Integer> swipeToRefresh = RxSwipeRefreshLayout.refreshes(swipe).map(new Func1<Void, Integer>() {
@@ -43,14 +45,24 @@ public class MainActivity extends AppCompatActivity {
       }
     });
     Observable<Integer> reloads = savedInstanceState == null ? swipeToRefresh.startWith(0) : swipeToRefresh;
-    RxPager.observePages(pagingAdapter, 100, reloads)
-      .doOnNext(new Action1<Integer>() {
+    RxPager.pageEventsWithRefresh(pagingAdapter, 100, reloads)
+      .doOnNext(new Action1<PageEvent>() {
         @Override
-        public void call(Integer it) {
-          if (it == 0) {
+        public void call(PageEvent pageEvent) {
+          if (pageEvent.getPage() == 0) {
             setIsRefreshingCompat(swipe, true);
             pagingAdapter.setCompleted(false);//do not show loader in list when refresh is shown
+          } else {
+            if (pageEvent.isReload()) {
+              pagingAdapter.showProgress();//show progress when error clicked and page is reloaded
+            }
           }
+        }
+      })
+      .map(new Func1<PageEvent, Integer>() {
+        @Override
+        public Integer call(PageEvent pageEvent) {
+          return pageEvent.getPage();
         }
       })
       .switchMap(new Func1<Integer, Observable<List<String>>>() {
