@@ -5,7 +5,6 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 
 import com.a6v.pagingadapter.PagingAdapter;
 import com.a6v.pagingadapter.rx.RxPager;
@@ -20,6 +19,8 @@ import rx.Observer;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.functions.Func1;
+
+import static com.a6v.pagingadapter.sample.Utils.*;
 
 public class MainActivity extends AppCompatActivity {
   @Override
@@ -119,18 +120,5 @@ public class MainActivity extends AppCompatActivity {
           setIsRefreshingCompat(swipe, false);
         }
       });
-  }
-
-  public static void setIsRefreshingCompat(final SwipeRefreshLayout swipe, final boolean isRefreshing) {
-    swipe.post(new Runnable() {
-      @Override
-      public void run() {
-        swipe.setRefreshing(isRefreshing);
-      }
-    });
-  }
-
-  public static void logError(Throwable error) {
-    Log.d("PagingSample", "error", error);
   }
 }
