@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <Preference android:title="@string/sample_basic_label">
+        <intent
+            android:targetClass="com.a6v.pagingadapter.sample.BasicListActivity"
+            android:targetPackage="@string/app_id" />
+    </Preference>
+    <Preference android:title="@string/activity_swipe_label">
+        <intent
+            android:targetClass="com.a6v.pagingadapter.sample.SwipeRefreshActivity"
+            android:targetPackage="@string/app_id" />
+    </Preference>
+</PreferenceScreen>

@@ -39,11 +39,12 @@ task clean(type: Delete) {
     delete rootProject.buildDir
 }
 
-def supportVersion = '23.3.0'
+def supportVersion = '23.4.0'
 def rxBindingVersion = '0.4.0'
 ext {
     appcompat = "com.android.support:appcompat-v7:$supportVersion"
     recyclerview = "com.android.support:recyclerview-v7:$supportVersion"
+    supportPref = "com.android.support:preference-v7:$supportVersion"
     rxjava = 'io.reactivex:rxjava:1.1.5'
     rxandroid = 'io.reactivex:rxandroid:1.2.0'
     rxbinding = "com.jakewharton.rxbinding:rxbinding:$rxBindingVersion"

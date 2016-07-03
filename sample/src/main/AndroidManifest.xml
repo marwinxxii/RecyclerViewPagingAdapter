@@ -8,12 +8,24 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <activity android:name=".MainActivity" android:screenOrientation="sensorPortrait">
+        <activity
+            android:name=".SamplesActivity"
+            android:theme="@style/SamplesActivityTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".SwipeRefreshActivity"
+            android:label="@string/activity_swipe_label"
+            android:screenOrientation="sensorPortrait" />
+
+        <activity
+            android:name=".BasicListActivity"
+            android:label="@string/activity_basic_label"
+            android:screenOrientation="sensorPortrait" />
     </application>
 
 </manifest>

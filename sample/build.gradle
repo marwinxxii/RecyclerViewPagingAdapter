@@ -5,6 +5,7 @@ android {
         applicationId "com.a6v.pagingadapter.sample"
         versionCode 1
         versionName "1.0"
+        resValue 'string', 'app_id', applicationId
     }
 }
 
@@ -14,6 +15,7 @@ dependencies {
     compile project(':rxpagingadapter')
     compile libs.appcompat
     compile libs.recyclerview
+    compile libs.supportPref
     compile libs.rxjava
     compile libs.rxandroid
     compile libs.rxbinding
