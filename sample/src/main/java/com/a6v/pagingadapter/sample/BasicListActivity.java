@@ -86,5 +86,6 @@ public class BasicListActivity extends AppCompatActivity {
           }
         }
       });
+    pagingAdapter.enableAndStartLoad();
   }
 }

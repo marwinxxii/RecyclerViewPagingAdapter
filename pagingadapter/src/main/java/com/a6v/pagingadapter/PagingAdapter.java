@@ -178,6 +178,13 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
     //notify about change?
   }
 
+  public void enableAndStartLoad() {
+    if (state == State.IDLE) {
+      state = State.READY_TO_LOAD;
+      notifyPagingItemChanged();
+    }
+  }
+
   private void notifyPagingItemChanged() {
     if (itemPosition >= 0) {
       notifyItemChanged(itemPosition);

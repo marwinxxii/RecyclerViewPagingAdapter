@@ -45,6 +45,7 @@ public class SwipeRefreshActivity extends AppCompatActivity {
         return 0;
       }
     });
+    //using startWith, because setIsRefresh=true doesn't notify refresh listener
     Observable<Integer> reloads = savedInstanceState == null ? swipeToRefresh.startWith(0) : swipeToRefresh;
     RxPager.pageEventsWithRefresh(pagingAdapter, 100, reloads)
       .doOnNext(new Action1<PageEvent>() {
@@ -120,5 +121,9 @@ public class SwipeRefreshActivity extends AppCompatActivity {
           setIsRefreshingCompat(swipe, false);
         }
       });
+    if (savedInstanceState == null) {
+      setIsRefreshingCompat(swipe, true);//doesn't notify refresh listener
+      pagingAdapter.enableAndStartLoad();
+    }
   }
 }

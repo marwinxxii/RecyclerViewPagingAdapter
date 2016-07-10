@@ -129,7 +129,7 @@ public final class RxPager {
     int startPage, int pageCount)
   {
     return Observable.range(startPage, pageCount)
-      .compose(Operators.<Integer>takeOneWhen(loadPageRequests.startWith((T) null)));
+      .compose(Operators.<Integer>takeOneWhen(loadPageRequests));
   }
 
   public static class PageEvent {
