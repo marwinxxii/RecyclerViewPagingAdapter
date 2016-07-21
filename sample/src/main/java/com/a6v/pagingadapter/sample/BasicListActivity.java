@@ -34,7 +34,7 @@ public class BasicListActivity extends AppCompatActivity {
     view.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
     view.setAdapter(pagingAdapter);
     RxPager.pages(pagingAdapter, 0, 100)
-      .switchMap(new Func1<Integer, Observable<List<String>>>() {
+      .flatMap(new Func1<Integer, Observable<List<String>>>() {
         @Override
         public Observable<List<String>> call(final Integer page) {
           return webApi.loadPage(page, pageSize)
@@ -86,6 +86,6 @@ public class BasicListActivity extends AppCompatActivity {
           }
         }
       });
-    pagingAdapter.enableAndStartLoad();
+    pagingAdapter.enableLoadingPages();
   }
 }

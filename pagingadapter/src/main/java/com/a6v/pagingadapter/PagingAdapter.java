@@ -156,41 +156,59 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
 
   public void showMessage(CharSequence message) {
     this.message = message;
-    state = State.MESSAGE;
-    notifyPagingItemChanged();
+    switchState(State.MESSAGE);
   }
 
   public void showProgress() {
-    state = State.LOADING;
-    notifyPagingItemChanged();
+    if (!State.LOADING.equals(state)) {
+      switchState(State.LOADING);
+    }
   }
 
   public void setCompleted(boolean enableNextPageLoading) {
-    enableNextPageLoading(enableNextPageLoading);
-    if (itemPosition >= 0) {
-      notifyItemRemoved(itemPosition);
-      itemPosition = -1;
-    }
-  }
-
-  public void enableNextPageLoading(boolean enable) {
-    state = enable ? State.READY_TO_LOAD : State.IDLE;
-    //notify about change?
-  }
-
-  public void enableAndStartLoad() {
-    if (state == State.IDLE) {
-      state = State.READY_TO_LOAD;
-      notifyPagingItemChanged();
-    }
-  }
-
-  private void notifyPagingItemChanged() {
-    if (itemPosition >= 0) {
-      notifyItemChanged(itemPosition);
+    if (State.LOADING.equals(state)) {
+      if (enableNextPageLoading) {
+        switchState(State.READY_TO_LOAD);
+      } else {
+        switchState(State.IDLE);
+      }
     } else {
-      //TODO notify item inserted?
-      notifyDataSetChanged();
+      throw new IllegalStateException("Not loading adapter can't be marked as completed");
+    }
+  }
+
+  public void enableLoadingPages() {
+    switch (state) {
+      case IDLE:
+      case MESSAGE:
+        switchState(State.READY_TO_LOAD);
+        break;
+      case LOADING:
+        throw new IllegalStateException("Can't start new load while loading");
+      case READY_TO_LOAD:
+        //do nothing
+        break;
+    }
+  }
+
+  private void switchState(State state) {
+    this.state = state;
+    switch (state) {
+      case READY_TO_LOAD:
+      case IDLE:
+        if (itemPosition >= 0) {
+          notifyItemRemoved(itemPosition);
+          itemPosition = -1;
+        }
+        break;
+      case LOADING:
+      case MESSAGE:
+        if (itemPosition >= 0) {
+          notifyItemChanged(itemPosition);
+        } else {
+          notifyDataSetChanged();
+        }
+        break;
     }
   }
 

@@ -46,14 +46,15 @@ public class SwipeRefreshActivity extends AppCompatActivity {
       }
     });
     //using startWith, because setIsRefresh=true doesn't notify refresh listener
-    Observable<Integer> reloads = savedInstanceState == null ? swipeToRefresh.startWith(0) : swipeToRefresh;
-    RxPager.pageEventsWithRefresh(pagingAdapter, 100, reloads)
+    RxPager.pageEventsWithRefresh(pagingAdapter, 100, swipeToRefresh)
+      //we manually trigger loading of first page
+      .startWith(savedInstanceState == null ? Observable.just(PageEvent.load(0)) : Observable.<PageEvent>empty())
       .doOnNext(new Action1<PageEvent>() {
         @Override
         public void call(PageEvent pageEvent) {
           if (pageEvent.getPage() == 0) {
             setIsRefreshingCompat(swipe, true);
-            pagingAdapter.setCompleted(false);//do not show loader in list when refresh is shown
+            //pagingAdapter.setCompleted(false);//do not show loader in list when refresh is shown
           } else {
             if (pageEvent.isReload()) {
               pagingAdapter.showProgress();//show progress when error clicked and page is reloaded
@@ -111,19 +112,21 @@ public class SwipeRefreshActivity extends AppCompatActivity {
 
         @Override
         public void onNext(List<String> strings) {
+          boolean firstPage = items.isEmpty();
           items.addAll(strings);
           if (items.isEmpty()) {
             pagingAdapter.showMessage(getString(R.string.list_empty));
           } else {
-            pagingAdapter.setCompleted(true);
-            itemsAdapter.notifyDataSetChanged();
+            if (firstPage) {
+              itemsAdapter.notifyDataSetChanged();//before enabling loading next page
+              pagingAdapter.enableLoadingPages();
+            } else {
+              pagingAdapter.setCompleted(true);
+              itemsAdapter.notifyDataSetChanged();
+            }
           }
           setIsRefreshingCompat(swipe, false);
         }
       });
-    if (savedInstanceState == null) {
-      setIsRefreshingCompat(swipe, true);//doesn't notify refresh listener
-      pagingAdapter.enableAndStartLoad();
-    }
   }
 }
