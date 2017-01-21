@@ -1,12 +1,11 @@
 package com.a6v.pagingadapter;
 
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.RecyclerView.*;
 
-public class AdapterDataObserverWrapper<T extends ViewHolder> extends AdapterDataObserver {
-  private final RecyclerView.Adapter<T> adapter;
+public class AdapterDataObserverWrapper extends RecyclerView.AdapterDataObserver {
+  private final RecyclerView.Adapter<?> adapter;
 
-  public AdapterDataObserverWrapper(RecyclerView.Adapter<T> adapter) {
+  public AdapterDataObserverWrapper(RecyclerView.Adapter<?> adapter) {
     this.adapter = adapter;
   }
 

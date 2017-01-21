@@ -1,6 +1,7 @@
-package com.a6v.pagingadapter.rx;
+package com.a6v.pagingadapter.rx.internal;
 
 import rx.Observable;
+import rx.functions.Func1;
 import rx.functions.Func2;
 
 public final class Operators {
@@ -8,7 +9,7 @@ public final class Operators {
     throw new AssertionError("No instances.");
   }
 
-  private static final Func2 returnFirstFunc2 = new Func2() {
+  static final Func2 returnFirstFunc2 = new Func2() {
     @Override
     public Object call(Object first, Object second) {
       return first;
@@ -40,6 +41,22 @@ public final class Operators {
           trigger.startWith((R) null),//allow emitting first item
           (Func2<T, R, T>) returnFirstFunc2
         );
+      }
+    };
+  }
+
+  public static <T, R> Observable.Transformer<T, T> restartWhen(final Observable<R> restarts) {
+    return new Observable.Transformer<T, T>() {
+      @Override
+      public Observable<T> call(final Observable<T> original) {
+        return restarts
+          .startWith((R) null)
+          .switchMap(new Func1<R, Observable<? extends T>>() {
+            @Override
+            public Observable<? extends T> call(R r) {
+              return original;
+            }
+          });
       }
     };
   }

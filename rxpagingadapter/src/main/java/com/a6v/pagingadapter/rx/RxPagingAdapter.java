@@ -7,15 +7,13 @@ import com.a6v.pagingadapter.PagingAdapter;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.MainThreadSubscription;
-import rx.functions.Action0;
-import rx.subscriptions.Subscriptions;
 
 public final class RxPagingAdapter {
   private RxPagingAdapter() {
-    throw new AssertionError("No instances");
+    throw new AssertionError("No instances.");
   }
 
-  public static Observable<Void> loadRequests(final PagingAdapter<?> adapter) {
+  public static Observable<Void> progressShown(final PagingAdapter adapter) {
     return Observable.create(new Observable.OnSubscribe<Void>() {
       @Override
       public void call(final Subscriber<? super Void> subscriber) {
@@ -37,13 +35,13 @@ public final class RxPagingAdapter {
     });
   }
 
-  public static Observable<Void> messageClicks(final PagingAdapter<?> adapter) {
+  public static Observable<Void> messageClicks(final PagingAdapter adapter) {
     return Observable.create(new Observable.OnSubscribe<Void>() {
       @Override
       public void call(final Subscriber<? super Void> subscriber) {
-        adapter.setMessageClickListener(new PagingAdapter.MessageClickListener() {
+        adapter.setMessageClickListener(new View.OnClickListener() {
           @Override
-          public void onMessageClick() {
+          public void onClick(View v) {
             if (!subscriber.isUnsubscribed()) {
               subscriber.onNext(null);
             }

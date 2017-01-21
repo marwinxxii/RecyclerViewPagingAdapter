@@ -1,8 +1,10 @@
 package com.a6v.pagingadapter.rx;
 
 import com.a6v.pagingadapter.PagingAdapter;
+import com.a6v.pagingadapter.rx.internal.Operators;
 
 import rx.Observable;
+import rx.functions.Action1;
 import rx.functions.Func1;
 
 public final class RxPager {
@@ -10,19 +12,19 @@ public final class RxPager {
     throw new AssertionError("No instances.");
   }
 
-  public static Observable<Integer> pagesWithRefresh(final PagingAdapter<?> adapter,
+  public static Observable<Integer> pagesWithRefresh(final PagingAdapter adapter,
     final int pageCount, Observable<Integer> reloadPages)
   {
     return pagesWithRefresh(
-      RxPagingAdapter.loadRequests(adapter),
+      RxPagingAdapter.progressShown(adapter),
       RxPagingAdapter.messageClicks(adapter),
       reloadPages,
       pageCount
     );
   }
 
-  /*Observable<?> can't be used for loadPageRequests because of startWith*/
   public static <T> Observable<Integer> pagesWithRefresh(
+    /*Observable<?> can't be used because of startWith*/
     final Observable<T> loadPageRequests,/*loadNextPage*/
     final Observable<?> repeatLatestPageRequests,/*reload current page*/
     final Observable<Integer> restartFromPageRequests,/*refresh whole list*/
@@ -37,47 +39,64 @@ public final class RxPager {
     });
   }
 
-  public static Observable<Integer> pages(final PagingAdapter<?> adapter,
-    final int startPage, final int pageCount)
+  public static Observable<Integer> pages(PagingAdapter adapter, int startPage, int pageCount) {
+    return pages(adapter, startPage, pageCount, true);
+  }
+
+  public static Observable<Integer> pages(PagingAdapter adapter, int startPage, int pageCount,
+    boolean showProgressOnMessageClick)
   {
+    Observable<Void> messageClicks = RxPagingAdapter.messageClicks(adapter);
+    if (showProgressOnMessageClick) {
+      messageClicks = messageClicks.doOnNext(new ShowProgressAction<Void>(adapter));
+    }
     return pages(
-      RxPagingAdapter.loadRequests(adapter),
-      RxPagingAdapter.messageClicks(adapter),
+      RxPagingAdapter.progressShown(adapter),
+      messageClicks,
       startPage,
       pageCount
     );
   }
 
   public static <T, R> Observable<Integer> pages(
-    final Observable<T> loadPageRequests,/*loadNextPage*/
-    final Observable<R> repeatLatestPageRequests,/*reload current page*/
-    final int startPage,
-    final int pageCount
+    Observable<T> loadPageRequests,/*loadNextPage*/
+    Observable<R> repeatLatestPageRequests,/*reload current page*/
+    int startPage, int pageCount
   )
   {
-    return loadPagesImpl(loadPageRequests, startPage, pageCount)
+    return pageNumbers(loadPageRequests, startPage, pageCount)
       .compose(Operators.<Integer, R>repeatLatestWhen(repeatLatestPageRequests));
   }
 
-  public static Observable<PageEvent> pageEvents(final PagingAdapter<?> adapter,
-    final int startPage, final int pageCount)
+  public static Observable<PageEvent> pageEvents(PagingAdapter adapter,
+    int startPage, int pageCount)
   {
+    return pageEvents(adapter, startPage, pageCount, true);
+  }
+
+  public static Observable<PageEvent> pageEvents(PagingAdapter adapter,
+    int startPage, int pageCount, boolean showProgressOnMessageClick)
+  {
+    Observable<Void> messageClicks = RxPagingAdapter.messageClicks(adapter);
+    if (showProgressOnMessageClick) {
+      messageClicks = messageClicks.doOnNext(new ShowProgressAction<Void>(adapter));
+    }
     return pageEvents(
-      RxPagingAdapter.loadRequests(adapter),
-      RxPagingAdapter.messageClicks(adapter),
+      RxPagingAdapter.progressShown(adapter),
+      messageClicks,
       startPage,
       pageCount
     );
   }
 
   public static <T> Observable<PageEvent> pageEvents(
-    final Observable<T> loadPageRequests,/*loadNextPage*/
+    Observable<T> loadPageRequests,/*loadNextPage*/
     final Observable<?> repeatLatestPageRequests,/*reload current page*/
-    final int startPage,
-    final int pageCount
+    int startPage,
+    int pageCount
   )
   {
-    return loadPagesImpl(loadPageRequests, startPage, pageCount)
+    return pageNumbers(loadPageRequests, startPage, pageCount)
       .map(new Func1<Integer, PageEvent>() {
         @Override
         public PageEvent call(Integer page) {
@@ -98,11 +117,11 @@ public final class RxPager {
       });
   }
 
-  public static Observable<PageEvent> pageEventsWithRefresh(final PagingAdapter<?> adapter,
-    final int pageCount, Observable<Integer> reloadPages)
+  public static Observable<PageEvent> pageEventsWithRefresh(PagingAdapter adapter,
+    int pageCount, Observable<Integer> reloadPages)
   {
     return pageEventsWithRefresh(
-      RxPagingAdapter.loadRequests(adapter),
+      RxPagingAdapter.progressShown(adapter),
       RxPagingAdapter.messageClicks(adapter),
       reloadPages,
       pageCount
@@ -125,7 +144,7 @@ public final class RxPager {
     });
   }
 
-  private static <T> Observable<Integer> loadPagesImpl(Observable<T> loadPageRequests,
+  private static <T> Observable<Integer> pageNumbers(Observable<T> loadPageRequests,
     int startPage, int pageCount)
   {
     return Observable.range(startPage, pageCount)
@@ -155,6 +174,19 @@ public final class RxPager {
 
     public static PageEvent reload(int page) {
       return new PageEvent(true, page);
+    }
+  }
+
+  static class ShowProgressAction<T> implements Action1<T> {
+    private final PagingAdapter adapter;
+
+    ShowProgressAction(PagingAdapter adapter) {
+      this.adapter = adapter;
+    }
+
+    @Override
+    public void call(T t) {
+      adapter.showProgress();
     }
   }
 }

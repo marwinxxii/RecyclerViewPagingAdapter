@@ -2,24 +2,35 @@ package com.a6v.pagingadapter;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.IntDef;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.*;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 
-public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<ViewHolder> {
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
+import static com.a6v.pagingadapter.PagingAdapter.State.KIND_IDLE;
+import static com.a6v.pagingadapter.PagingAdapter.State.KIND_LOADING;
+import static com.a6v.pagingadapter.PagingAdapter.State.KIND_MESSAGE;
+import static com.a6v.pagingadapter.PagingAdapter.State.KIND_READY_TO_LOAD;
+
+public class PagingAdapter extends RecyclerView.Adapter {
   public static final int PROGRESS_VIEW_TYPE = 100, MESSAGE_VIEW_TYPE = 200;
 
-  private final Adapter<T> adapter;
-  private final int progressLayoutRes;
+  private final Adapter adapter;
+  private final LayoutInflater inflater;
 
+  @LayoutRes private final int progressLayoutRes;
   private final int progressViewType;
-  private final int messageLayoutRes;
+
+  @LayoutRes private final int messageLayoutRes;
   private final int messageViewType;
 
   private final Handler mainThreadHandler = new Handler(Looper.getMainLooper());
@@ -31,59 +42,33 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
       }
     }
   };
-  private final Runnable notifyMessageClickRunnable = new Runnable() {
-    @Override
-    public void run() {
-      if (messageClickListener != null) {
-        messageClickListener.onMessageClick();
-      }
-    }
-  };
-  private final OnClickListener realMessageClickListener = new OnClickListener() {
-    @Override
-    public void onClick(View v) {
-      if (progressShownListener != null) {
-        if (showProgressOnMessageClick) {
-          showProgress();
-        }
-        mainThreadHandler.post(notifyMessageClickRunnable);
-      }
-    }
-  };
 
-  @Nullable private ProgressShownListener progressShownListener;
-  @Nullable private MessageClickListener messageClickListener;
+  @Nullable ProgressShownListener progressShownListener;
+  @Nullable OnClickListener messageClickListener;
 
   private State state = State.IDLE;
-  private LayoutInflater inflater;
-  private int itemPosition = -1;
   private int itemCount = 0;
-  private boolean showProgressOnMessageClick = true;
-  @Nullable private CharSequence message;
 
-  public PagingAdapter(Builder<T> builder) {
+  public PagingAdapter(Builder builder) {
     adapter = builder.adapter;
-    adapter.registerAdapterDataObserver(new AdapterDataObserverWrapper<>(this));
+    adapter.registerAdapterDataObserver(new AdapterDataObserverWrapper(this));
+    inflater = builder.inflater;
     progressLayoutRes = builder.progressLayoutRes;
     progressViewType = builder.progressViewType;
-    progressShownListener = builder.progressShownListener;
-    message = builder.message;
     messageLayoutRes = builder.messageLayoutRes;
     messageViewType = builder.messageViewType;
-    messageClickListener = builder.messageClickListener;
-    showProgressOnMessageClick = builder.showProgressOnMessageClick;
   }
 
   @Override
   public int getItemCount() {
     int count = 0;
-    switch (state) {
-      case IDLE:
+    switch (state.kind) {
+      case KIND_IDLE:
         count = 0;
         break;
-      case READY_TO_LOAD:
-      case LOADING:
-      case MESSAGE:
+      case KIND_READY_TO_LOAD:
+      case KIND_LOADING:
+      case KIND_MESSAGE:
         count = 1;
     }
     itemCount = adapter.getItemCount() + count;
@@ -93,12 +78,14 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
   @Override
   public int getItemViewType(int position) {
     if (position == itemCount - 1) {
-      switch (state) {
-        case READY_TO_LOAD:
-        case LOADING:
+      switch (state.kind) {
+        case KIND_READY_TO_LOAD:
+        case KIND_LOADING:
           return PROGRESS_VIEW_TYPE;
-        case MESSAGE:
+        case KIND_MESSAGE:
           return MESSAGE_VIEW_TYPE;
+        case KIND_IDLE:
+          break;
       }
     }
     return adapter.getItemViewType(position);
@@ -106,9 +93,6 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
 
   @Override
   public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-    if (inflater == null) {
-      inflater = LayoutInflater.from(parent.getContext());
-    }
     if (viewType == progressViewType) {
       return new ProgressViewHolder(inflater.inflate(progressLayoutRes, parent, false));
     } else if (viewType == messageViewType) {
@@ -119,23 +103,40 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
 
   @Override
   public void onBindViewHolder(ViewHolder holder, int position) {
-    if (holder instanceof ProgressViewHolder) {
-      itemPosition = position;
-      if (state == State.READY_TO_LOAD) {
-        state = State.LOADING;
-        mainThreadHandler.post(notifyProgressShownRunnable);
-      }
-    } else if (holder instanceof MessageViewHolder) {
-      itemPosition = position;
-      MessageViewHolder messageViewHolder = (MessageViewHolder) holder;
-      messageViewHolder.bind(message, realMessageClickListener);
-    } else {
-      adapter.onBindViewHolder((T) holder, position);
+    switch (state.kind) {
+      case State.KIND_IDLE:
+        break;
+      case State.KIND_READY_TO_LOAD:
+        if (holder instanceof ProgressViewHolder) {
+          switchState(new LoadingState((ProgressViewHolder) holder));
+          mainThreadHandler.post(notifyProgressShownRunnable);
+          return;
+        }
+        break;
+      case State.KIND_LOADING:
+        if (holder instanceof ProgressViewHolder) {
+          LoadingState loading = (LoadingState) this.state;
+          if (loading.viewHolder == null) {
+            loading.viewHolder = (ProgressViewHolder) holder;
+          }
+          return;
+        }
+        break;
+      case State.KIND_MESSAGE:
+        if (holder instanceof MessageViewHolder) {
+          MessageState ms = (MessageState) this.state;
+          if (ms.viewHolder == null) {
+            ms.viewHolder = (MessageViewHolder) holder;
+          }
+          ms.viewHolder.bind(ms.message, messageClickListener);
+          return;
+        }
+        break;
     }
+    adapter.onBindViewHolder(holder, position);
   }
 
-  public void setProgressShownListener(@NonNull ProgressShownListener progressShownListener) {
-    //TODO check not null
+  public void setProgressShownListener(@Nullable ProgressShownListener progressShownListener) {
     this.progressShownListener = progressShownListener;
   }
 
@@ -144,131 +145,131 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
     progressShownListener = null;
   }
 
-  public void setMessageClickListener(@NonNull MessageClickListener messageClickListener) {
-    //TODO check not null
+  public void setMessageClickListener(@Nullable OnClickListener messageClickListener) {
     this.messageClickListener = messageClickListener;
   }
 
   public void removeMessageClickListener() {
-    mainThreadHandler.removeCallbacks(notifyMessageClickRunnable);
     messageClickListener = null;
   }
 
   public void showMessage(CharSequence message) {
-    this.message = message;
-    switchState(State.MESSAGE);
+    switchState(new MessageState(message, null));
+  }
+
+  public void hideMessage(boolean enableNextPageLoading) {
+    if (state.kind == KIND_MESSAGE) {
+      switchState(enableNextPageLoading ? State.READY_TO_LOAD : State.IDLE);
+    }
   }
 
   public void showProgress() {
-    if (!State.LOADING.equals(state)) {
-      switchState(State.LOADING);
+    if (state.kind != State.KIND_LOADING) {
+      switchState(new LoadingState(null));
     }
   }
 
-  public void setCompleted(boolean enableNextPageLoading) {
-    if (State.LOADING.equals(state)) {
-      if (enableNextPageLoading) {
-        switchState(State.READY_TO_LOAD);
-      } else {
-        switchState(State.IDLE);
-      }
-    } else {
-      throw new IllegalStateException("Not loading adapter can't be marked as completed");
+  public void hideProgress(boolean enableNextPageLoading) {
+    if (state.kind == State.KIND_LOADING) {
+      switchState(enableNextPageLoading ? State.READY_TO_LOAD : State.IDLE);
     }
   }
 
-  public void enableLoadingPages() {
-    switch (state) {
-      case IDLE:
-      case MESSAGE:
+  public void startLoadingPages() {
+    switch (state.kind) {
+      case KIND_IDLE:
         switchState(State.READY_TO_LOAD);
         break;
-      case LOADING:
-        throw new IllegalStateException("Can't start new load while loading");
-      case READY_TO_LOAD:
+      case KIND_MESSAGE:
+        hideMessage(true);
+        break;
+      case KIND_LOADING:
+        throw new IllegalStateException("Can't start new load when already loading");
+      case KIND_READY_TO_LOAD:
         //do nothing
         break;
     }
   }
 
   private void switchState(State state) {
+    State previous = this.state;
+    int previousPosition = getItemPosition(previous);
     this.state = state;
-    switch (state) {
-      case READY_TO_LOAD:
-      case IDLE:
-        if (itemPosition >= 0) {
-          notifyItemRemoved(itemPosition);
-          itemPosition = -1;
+    switch (state.kind) {
+      case State.KIND_IDLE:
+      case State.KIND_READY_TO_LOAD:
+        if (previousPosition != RecyclerView.NO_POSITION) {
+          notifyItemRemoved(previousPosition);
         }
         break;
-      case LOADING:
-      case MESSAGE:
-        if (itemPosition >= 0) {
-          notifyItemChanged(itemPosition);
-        } else {
-          notifyDataSetChanged();
+      case State.KIND_LOADING:
+      case State.KIND_MESSAGE:
+        if (previousPosition != RecyclerView.NO_POSITION) {
+          notifyItemChanged(previousPosition);
+        } else if (previous.kind == KIND_IDLE) {
+          notifyDataSetChanged();//TODO inserted
         }
         break;
     }
   }
 
-  public static class Builder<T extends ViewHolder> {
-    private final Adapter<T> adapter;
-    private int progressLayoutRes = R.layout.rvpa_widget_list_progress;
-    private int progressViewType = PROGRESS_VIEW_TYPE;
-    private @Nullable ProgressShownListener progressShownListener;
-    private CharSequence message;
-    private int messageLayoutRes = R.layout.rvpa_widget_list_message;
-    private int messageViewType = MESSAGE_VIEW_TYPE;
-    private @Nullable MessageClickListener messageClickListener;
-    private boolean showProgressOnMessageClick = true;
+  private static int getItemPosition(State state) {
+    int position;
+    switch (state.kind) {
+      case State.KIND_LOADING:
+        ProgressViewHolder pvh = ((LoadingState) state).viewHolder;
+        position = pvh != null ? pvh.getAdapterPosition() : RecyclerView.NO_POSITION;
+        break;
+      case State.KIND_MESSAGE:
+        MessageViewHolder mvh = ((MessageState) state).viewHolder;
+        position = mvh != null ? mvh.getAdapterPosition() : RecyclerView.NO_POSITION;
+        break;
+      case State.KIND_IDLE:
+      case State.KIND_READY_TO_LOAD:
+      default:
+        position = RecyclerView.NO_POSITION;
+        break;
+    }
+    return position;
+  }
 
-    public Builder(@NonNull Adapter<T> adapter) {
+  public static class Builder {
+    final Adapter<?> adapter;
+    final LayoutInflater inflater;
+
+    @LayoutRes int progressLayoutRes = R.layout.rvpa_widget_list_progress;
+    int progressViewType = PROGRESS_VIEW_TYPE;
+
+    @LayoutRes int messageLayoutRes = R.layout.rvpa_widget_list_message;
+    int messageViewType = MESSAGE_VIEW_TYPE;
+
+    public Builder(@NonNull Adapter<?> adapter, @NonNull LayoutInflater inflater) {
       this.adapter = adapter;
+      this.inflater = inflater;
     }
 
-    public Builder<T> setProgressLayoutRes(@LayoutRes int progressLayoutRes) {
+    public Builder setProgressLayoutRes(@LayoutRes int progressLayoutRes) {
       this.progressLayoutRes = progressLayoutRes;
       return this;
     }
 
-    public Builder<T> setProgressViewType(int progressViewType) {
+    public Builder setProgressViewType(int progressViewType) {
       this.progressViewType = progressViewType;
       return this;
     }
 
-    public Builder<T> setProgressShownListener(@NonNull ProgressShownListener progressShownListener) {
-      this.progressShownListener = progressShownListener;
-      return this;
-    }
-
-    public Builder<T> setMessage(CharSequence message) {
-      this.message = message;
-      return this;
-    }
-
-    public Builder<T> setMessageLayoutRes(@LayoutRes int messageLayoutRes) {
+    public Builder setMessageLayoutRes(@LayoutRes int messageLayoutRes) {
       this.messageLayoutRes = messageLayoutRes;
       return this;
     }
 
-    public Builder<T> setMessageViewType(int messageViewType) {
+    public Builder setMessageViewType(int messageViewType) {
       this.messageViewType = messageViewType;
       return this;
     }
 
-    public Builder<T> setMessageClickListener(@NonNull MessageClickListener messageClickListener) {
-      this.messageClickListener = messageClickListener;
-      return this;
-    }
-
-    public PagingAdapter<T> build() {
-      return new PagingAdapter<>(this);
-    }
-
-    public Builder<T> showProgressOnMessageClick(boolean showProgressOnMessageClick) {
-      this.showProgressOnMessageClick = showProgressOnMessageClick;
-      return this;
+    public PagingAdapter build() {
+      return new PagingAdapter(this);
     }
   }
 
@@ -276,11 +277,41 @@ public class PagingAdapter<T extends ViewHolder> extends RecyclerView.Adapter<Vi
     void onProgressShown();
   }
 
-  public interface MessageClickListener {
-    void onMessageClick();
+  static class State {
+    static final int KIND_IDLE = 0, KIND_READY_TO_LOAD = 1, KIND_LOADING = 2, KIND_MESSAGE = 3;
+    static final State IDLE = new State(KIND_IDLE);
+    static final State READY_TO_LOAD = new State(KIND_READY_TO_LOAD);
+
+    @Kind public final int kind;
+
+    protected State(@Kind int kind) {
+      this.kind = kind;
+    }
+
+    @IntDef({KIND_IDLE, KIND_READY_TO_LOAD, KIND_LOADING, KIND_MESSAGE})
+    @Documented
+    @Retention(RetentionPolicy.SOURCE)
+    @interface Kind {
+    }
   }
 
-  private enum State {
-    IDLE, READY_TO_LOAD, LOADING, MESSAGE
+  static class LoadingState extends State {
+    @Nullable public ProgressViewHolder viewHolder;
+
+    LoadingState(@Nullable ProgressViewHolder viewHolder) {
+      super(KIND_LOADING);
+      this.viewHolder = viewHolder;
+    }
+  }
+
+  static class MessageState extends State {
+    public final CharSequence message;
+    @Nullable public MessageViewHolder viewHolder;
+
+    MessageState(CharSequence message, @Nullable MessageViewHolder viewHolder) {
+      super(KIND_MESSAGE);
+      this.message = message;
+      this.viewHolder = viewHolder;
+    }
   }
 }

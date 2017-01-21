@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
 
 import com.a6v.pagingadapter.PagingAdapter;
 import com.a6v.pagingadapter.rx.RxPager;
@@ -29,8 +30,9 @@ public class BasicListActivity extends AppCompatActivity {
     final int pageSize = 10;
     final WebApi webApi = new WebApi();
     final ArrayList<String> items = new ArrayList<>();
-    final StringItemsAdapter itemsAdapter = new StringItemsAdapter(items);
-    final PagingAdapter<StringItemsAdapter.StringViewHolder> pagingAdapter = new PagingAdapter.Builder<>(itemsAdapter).build();
+    LayoutInflater inflater = getLayoutInflater();
+    final StringItemsAdapter itemsAdapter = new StringItemsAdapter(items, inflater);
+    final PagingAdapter pagingAdapter = new PagingAdapter.Builder(itemsAdapter, inflater).build();
     view.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
     view.setAdapter(pagingAdapter);
     RxPager.pages(pagingAdapter, 0, 100)
@@ -58,16 +60,9 @@ public class BasicListActivity extends AppCompatActivity {
             .onErrorResumeNext(Observable.<List<String>>empty());
         }
       })
-      .takeUntil(new Func1<List<String>, Boolean>() {
-        @Override
-        public Boolean call(List<String> strings) {
-          return strings.size() < pageSize;//stop when last page is found
-        }
-      })
       .subscribe(new Observer<List<String>>() {
         @Override
         public void onCompleted() {
-          pagingAdapter.setCompleted(false);//prevent any further loading
         }
 
         @Override
@@ -77,15 +72,17 @@ public class BasicListActivity extends AppCompatActivity {
 
         @Override
         public void onNext(List<String> strings) {
+          //takeUntil can also be used, to complete sequence, when last page was received
+          boolean lastPage = strings.size() < pageSize;
           items.addAll(strings);
           if (items.isEmpty()) {
             pagingAdapter.showMessage(getString(R.string.list_empty));
           } else {
-            pagingAdapter.setCompleted(true);
+            pagingAdapter.hideProgress(!lastPage);
             itemsAdapter.notifyDataSetChanged();
           }
         }
       });
-    pagingAdapter.enableLoadingPages();
+    pagingAdapter.startLoadingPages();
   }
 }

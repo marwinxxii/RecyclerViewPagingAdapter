@@ -5,6 +5,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
 
 import com.a6v.pagingadapter.PagingAdapter;
 import com.a6v.pagingadapter.rx.RxPager;
@@ -33,10 +34,9 @@ public class SwipeRefreshActivity extends AppCompatActivity {
     final int pageSize = 10;
     final WebApi webApi = new WebApi();
     final ArrayList<String> items = new ArrayList<>();
-    final StringItemsAdapter itemsAdapter = new StringItemsAdapter(items);
-    final PagingAdapter<StringItemsAdapter.StringViewHolder> pagingAdapter = new PagingAdapter.Builder<>(itemsAdapter)
-      .showProgressOnMessageClick(false)//we have custom progress logic because of swipe
-      .build();
+    LayoutInflater inflater = getLayoutInflater();
+    final StringItemsAdapter itemsAdapter = new StringItemsAdapter(items, inflater);
+    final PagingAdapter pagingAdapter = new PagingAdapter.Builder(itemsAdapter, inflater).build();
     view.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
     view.setAdapter(pagingAdapter);
     Observable<Integer> swipeToRefresh = RxSwipeRefreshLayout.refreshes(swipe).map(new Func1<Void, Integer>() {
@@ -102,7 +102,7 @@ public class SwipeRefreshActivity extends AppCompatActivity {
       .subscribe(new Observer<List<String>>() {
         @Override
         public void onCompleted() {
-          pagingAdapter.setCompleted(false);//prevent any further loading
+          pagingAdapter.hideProgress(false);//prevent any further loading
         }
 
         @Override
@@ -119,9 +119,9 @@ public class SwipeRefreshActivity extends AppCompatActivity {
           } else {
             if (firstPage) {
               itemsAdapter.notifyDataSetChanged();//before enabling loading next page
-              pagingAdapter.enableLoadingPages();
+              pagingAdapter.startLoadingPages();
             } else {
-              pagingAdapter.setCompleted(true);
+              pagingAdapter.hideProgress(true);
               itemsAdapter.notifyDataSetChanged();
             }
           }

@@ -10,17 +10,15 @@ import java.util.List;
 
 public class StringItemsAdapter extends RecyclerView.Adapter<StringItemsAdapter.StringViewHolder> {
   private final List<String> items;
-  private LayoutInflater inflater;
+  private final LayoutInflater inflater;
 
-  public StringItemsAdapter(List<String> items) {
+  public StringItemsAdapter(List<String> items, LayoutInflater inflater) {
     this.items = items;
+    this.inflater = inflater;
   }
 
   @Override
   public StringViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-    if (inflater == null) {
-      inflater = LayoutInflater.from(parent.getContext());
-    }
     return new StringViewHolder(inflater.inflate(R.layout.widget_string_item, parent, false));
   }
 
