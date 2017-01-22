@@ -5,11 +5,10 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".SamplesActivity"
+            android:name=".activities.SamplesActivity"
             android:theme="@style/SamplesActivityTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -18,14 +17,13 @@
         </activity>
 
         <activity
-            android:name=".SwipeRefreshActivity"
-            android:label="@string/activity_swipe_label"
+            android:name=".activities.DecoratorAdapterActivity"
+            android:label="@string/activity_basic_label"
             android:screenOrientation="sensorPortrait" />
 
         <activity
-            android:name=".BasicListActivity"
-            android:label="@string/activity_basic_label"
+            android:name=".activities.AdapterWithDelegateActivity"
+            android:label="@string/activity_delegate_label"
             android:screenOrientation="sensorPortrait" />
     </application>
-
 </manifest>

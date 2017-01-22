@@ -1,9 +1,11 @@
-package com.a6v.pagingadapter.sample;
+package com.a6v.pagingadapter.sample.activities;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceFragmentCompat;
+
+import com.a6v.pagingadapter.sample.R;
 
 public class SamplesActivity extends AppCompatActivity {
   @Override

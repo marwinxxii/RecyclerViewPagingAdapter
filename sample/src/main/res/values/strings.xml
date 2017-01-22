@@ -1,11 +1,11 @@
 <resources>
     <string name="app_name">PagingAdapter</string>
     <string name="activity_main_label">PagingAdapter samples</string>
-    <string name="activity_swipe_label">Swipe to refresh sample</string>
-    <string name="activity_basic_label">Basic list sample</string>
+    <string name="activity_basic_label">Decorator adapter</string>
+    <string name="activity_delegate_label">Delegate sample</string>
 
-    <string name="sample_basic_label">Basic in-memory list</string>
-    <string name="sample_swipe_label">In-memory list with refresh</string>
+    <string name="sample_basic_label">Basic sample with decorator adapter</string>
+    <string name="sample_delegate">Basic sample with delegate</string>
 
     <string name="list_error">Error. Tap to reload</string>
     <string name="list_empty">List is empty</string>

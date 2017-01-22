@@ -2,12 +2,12 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <Preference android:title="@string/sample_basic_label">
         <intent
-            android:targetClass="com.a6v.pagingadapter.sample.BasicListActivity"
+            android:targetClass="com.a6v.pagingadapter.sample.activities.DecoratorAdapterActivity"
             android:targetPackage="@string/app_id" />
     </Preference>
-    <Preference android:title="@string/activity_swipe_label">
+    <Preference android:title="@string/activity_delegate_label">
         <intent
-            android:targetClass="com.a6v.pagingadapter.sample.SwipeRefreshActivity"
+            android:targetClass="com.a6v.pagingadapter.sample.activities.AdapterWithDelegateActivity"
             android:targetPackage="@string/app_id" />
     </Preference>
 </PreferenceScreen>

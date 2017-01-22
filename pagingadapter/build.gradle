@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 
-def libs = rootProject.ext
 dependencies {
-    compile libs.appcompat
-    compile libs.recyclerview
+    provided libs.appcompat
+    provided libs.recyclerview
+    provided libs.supportAnnotations
 }

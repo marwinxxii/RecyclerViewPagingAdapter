@@ -2,7 +2,8 @@ package com.a6v.pagingadapter.rx;
 
 import android.view.View;
 
-import com.a6v.pagingadapter.PagingAdapter;
+import com.a6v.pagingadapter.IPagingAdapter;
+import com.a6v.pagingadapter.ProgressShownListener;
 
 import rx.Observable;
 import rx.Subscriber;
@@ -13,11 +14,11 @@ public final class RxPagingAdapter {
     throw new AssertionError("No instances.");
   }
 
-  public static Observable<Void> progressShown(final PagingAdapter adapter) {
+  public static Observable<Void> progressShown(final IPagingAdapter adapter) {
     return Observable.create(new Observable.OnSubscribe<Void>() {
       @Override
       public void call(final Subscriber<? super Void> subscriber) {
-        adapter.setProgressShownListener(new PagingAdapter.ProgressShownListener() {
+        adapter.setProgressShownListener(new ProgressShownListener() {
           @Override
           public void onProgressShown() {
             if (!subscriber.isUnsubscribed()) {
@@ -35,7 +36,7 @@ public final class RxPagingAdapter {
     });
   }
 
-  public static Observable<Void> messageClicks(final PagingAdapter adapter) {
+  public static Observable<Void> messageClicks(final IPagingAdapter adapter) {
     return Observable.create(new Observable.OnSubscribe<Void>() {
       @Override
       public void call(final Subscriber<? super Void> subscriber) {

@@ -2,6 +2,6 @@ apply plugin: 'com.android.library'
 
 dependencies {
     compile project(':pagingadapter')
-    provided libs.rxjava
-    provided libs.rxandroid
+    provided libs.rxjava2
+    provided libs.rxandroid2
 }

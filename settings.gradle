@@ -1,1 +1,1 @@
-include ':sample', ':pagingadapter', ':rxpagingadapter'
+include ':sample', ':pagingadapter', ':rxpagingadapter', ':rxpagingadapter2'

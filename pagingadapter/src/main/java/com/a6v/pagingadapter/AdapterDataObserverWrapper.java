@@ -36,6 +36,8 @@ public class AdapterDataObserverWrapper extends RecyclerView.AdapterDataObserver
 
   @Override
   public void onItemRangeMoved(int fromPosition, int toPosition, int itemCount) {
-    adapter.notifyDataSetChanged();//TODO better solution for items moved
+    for (int i = 0; i < itemCount; i++) {
+      adapter.notifyItemMoved(fromPosition + i, toPosition + i);
+    }
   }
 }

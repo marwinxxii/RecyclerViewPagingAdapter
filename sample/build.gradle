@@ -9,15 +9,14 @@ android {
     }
 }
 
-def libs = rootProject.ext
 dependencies {
     compile project(':pagingadapter')
     compile project(':rxpagingadapter')
     compile libs.appcompat
     compile libs.recyclerview
     compile libs.supportPref
-    compile libs.rxjava
-    compile libs.rxandroid
-    compile libs.rxbinding
-    compile libs.rxbindingSupportV4
+    //compile libs.rxjava
+    //compile libs.rxandroid
+    //compile libs.rxbinding
+    //compile libs.rxbindingSupportV4
 }

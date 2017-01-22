@@ -12,4 +12,6 @@
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
     </style>
 
+    <dimen name="list_progress_size">50dp</dimen>
+
 </resources>

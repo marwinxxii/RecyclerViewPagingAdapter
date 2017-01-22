@@ -5,7 +5,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.1.2'
+        classpath 'com.android.tools.build:gradle:2.3.0'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -19,12 +19,12 @@ subprojects {
 
     afterEvaluate {
         android {
-            compileSdkVersion 23
-            buildToolsVersion '23.0.2'
+            compileSdkVersion 25
+            buildToolsVersion '25.0.2'
 
             defaultConfig {
                 minSdkVersion 15
-                targetSdkVersion 23
+                targetSdkVersion 25
             }
             buildTypes {
                 release {
@@ -39,14 +39,17 @@ task clean(type: Delete) {
     delete rootProject.buildDir
 }
 
-def supportVersion = '23.4.0'
-def rxBindingVersion = '0.4.0'
-ext {
-    appcompat = "com.android.support:appcompat-v7:$supportVersion"
-    recyclerview = "com.android.support:recyclerview-v7:$supportVersion"
-    supportPref = "com.android.support:preference-v7:$supportVersion"
-    rxjava = 'io.reactivex:rxjava:1.1.5'
-    rxandroid = 'io.reactivex:rxandroid:1.2.0'
-    rxbinding = "com.jakewharton.rxbinding:rxbinding:$rxBindingVersion"
-    rxbindingSupportV4 = "com.jakewharton.rxbinding:rxbinding-support-v4:$rxBindingVersion"
-}
+def supportVersion = '25.2.0'
+def rxBindingVersion = '1.0.1'
+ext.libs = [
+    appcompat: "com.android.support:appcompat-v7:$supportVersion",
+    recyclerview: "com.android.support:recyclerview-v7:$supportVersion",
+    supportPref: "com.android.support:preference-v7:$supportVersion",
+    supportAnnotations: "com.android.support:support-annotations:$supportVersion",
+    rxjava: 'io.reactivex:rxjava:1.2.7',
+    rxjava2: 'io.reactivex.rxjava2:rxjava:2.0.7',
+    rxandroid: 'io.reactivex:rxandroid:1.2.1',
+    rxandroid2: 'io.reactivex.rxjava2:rxandroid:2.0.1',
+    rxbinding: "com.jakewharton.rxbinding:rxbinding:$rxBindingVersion",
+    rxbindingSupportV4: "com.jakewharton.rxbinding:rxbinding-support-v4:$rxBindingVersion",
+]
